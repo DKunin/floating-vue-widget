@@ -6,7 +6,7 @@
   "scripts": {
     "test": "eslint ./src/**/*.es6",
     "dev": "chokidar './src/**/*.es6' -c 'npm run build'",
-    "build": "browserify ./src/index.es6 -o ./dist/floating-widget.user.js -t [ vueify babelify --presets [ es2015 ] ]"
+    "build": "browserify ./src/index.es6 -o ./dist/floating-widget.user.js -t [ vueify babelify --presets [ es2015 ] ] && cat ./src/prepend > ./dist/dist.js && cat ./dist/floating-widget.user.js >> ./dist/dist.js"
   },
   "keywords": [],
   "license": "MIT",
@@ -14,13 +14,14 @@
   "dependencies": {
     "browserify": "14.4.0",
     "css-modulesify": "0.28.0",
-    "vue": "2.4.2"
+    "vue": "2.5.9"
   },
   "devDependencies": {
-    "babel-plugin-transform-runtime": "6.23.0",
     "babel-preset-es2015": "6.24.1",
-    "babelify": "7.3.0",
-    "chokidar-cli": "1.2.0",
-    "vueify": "9.4.1"
+    "babel-core": "6.26.0",
+    "babelify": "8.0.0",
+    "babel-plugin-transform-runtime": "6.23.0",
+    "vueify": "9.4.1",
+    "chokidar-cli": "1.2.0"
   }
 }
