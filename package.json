@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "eslint ./src/**/*.es6",
-    "dev": "chokidar './src/**/*.es6' -c 'npm run build'",
+    "dev": "chokidar './src/**/*.*' -c 'npm run build'",
     "build": "browserify ./src/index.es6 -o ./dist/floating-widget.user.js -t [ vueify babelify --presets [ es2015 ] ] && cat ./src/prepend > ./dist/dist.js && cat ./dist/floating-widget.user.js >> ./dist/dist.js"
   },
   "keywords": [],
