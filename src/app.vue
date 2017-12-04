@@ -4,13 +4,13 @@
         :class="{ 'hive-holder': true, 'hive-holder_fixed': fixed, 'hive-holder-minimized': hidden }"
         :style="fixed ? { top: top + 'px', left: left + 'px' } : {}">
         <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" v-if="hidden" class="hive-header">
-            &nbsp;&nbsp;&nbsp;<div class="hive-counter">{{ foldedReviewers.length }}</div>
+            <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" fill="#fff" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
+        <div class="hive-counter">{{ foldedfavorites.length }}</div>
         </h4>
         <div v-if="!hidden">
             <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" class="hive-header">
                  <div class="hive-no-events">
                     Добавить в избранное
-                    <svg @click="addToFavorites" width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" fill="#fff" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
                  </div>
             </h4>
             <div class="hive-controls">
@@ -18,15 +18,18 @@
             </div>
             <div v-if="loading" class="hive-loading"><div>Loading</div></div>
 
-            <div v-if="!loading && !foldedReviewers.length" class="hive-loading">
+            <div v-if="!loading && !foldedfavorites.length" class="hive-loading">
                 <div class="hive-no-data">
                 </div>
             </div>
 
-            <ul v-if="!loading && foldedReviewers.length" class="hive hive-list">
-                
+            <ul v-if="!loading && foldedfavorites.length" class="hive hive-list">
+                <li v-for="singleFav in foldedfavorites">
+                    {{singleFav.name}}
+                </li>
             </ul>
             <div class="hive-footer">
+                <svg @click="addToFavorites" width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" fill="#fff" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
                 <small class="hive-version-info" @dblclick="toggleDebug">0.0.0</small>
                 <div v-if="debug" class="hive-error-message">{{ error.message }}</div>
             </div>
@@ -40,7 +43,9 @@ const hivePosition = JSON.parse(localStorage.getItem('hive-position')) || {
     top: 30,
     left: 600
 };
-let reviewers = [];
+const storage = require('./storage');
+
+let favorites = [];
 
 export default {
     data: () => {
@@ -56,7 +61,7 @@ export default {
                 debug: false,
                 basePath: '',
                 error: { message: 'В Багдаде все спокойно' },
-                reviewers,
+                favorites,
                 selected: [],
                 sort: 'default'
             },
@@ -68,7 +73,13 @@ export default {
             this.$set(this, 'showMore', !this.showMore);
         },
         addReviewer() {},
-        addToFavorites() {},
+        addToFavorites() {
+            const profileIdString = window.location.href.match(/\/\w+\/profile/g);
+            const title = document.querySelector('[data-marker="profilePublic/name"]');
+            const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
+            storage.saveFavorite(profileId, title.innerText);
+            this.updateData();
+        },
         syncDataWithInput() {},
         startMove(event) {
             this.$set(this, 'moving', true);
@@ -87,18 +98,19 @@ export default {
             console.log(this.error);
         },
         updateData() {
-
+            this.$set(this, 'favorites', storage.getFavorites());
+            this.$set(this, 'loading', false);
         },
         toggleWidget() {
-            // this.$set(this, 'hidden', !this.hidden);
+            this.$set(this, 'hidden', !this.hidden);
         },
         generatePosition() {
             return `top: ${this.top}; left: ${this.left}`;
         }
     },
     computed: {
-        foldedReviewers() {
-            const sorted = this.reviewers;
+        foldedfavorites() {
+            const sorted = this.favorites;
             if (this.showMore) {
                 return sorted;
             }
