@@ -1,11 +1,10 @@
 'use strict';
-
+// && cat ./src/prepend > ./dist/dist.js && cat ./dist/floating-widget.user.js >> ./dist/dist.js
 // Append hook for Vue instance
 const menuNode = document.querySelector('.chrome-chrome');
 const div = document.createElement('div');
 div.className = 'reviewer-suggester';
 menuNode.appendChild(div, menuNode.firstChild);
-
 const Vue = require('vue');
 const App = require('./app.vue');
 

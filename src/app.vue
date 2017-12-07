@@ -4,8 +4,8 @@
         :class="{ 'hive-holder': true, 'hive-holder_fixed': fixed, 'hive-holder-minimized': hidden }"
         :style="fixed ? { top: top + 'px', left: left + 'px' } : {}">
         <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" v-if="hidden" class="hive-header">
-            <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" fill="#fff" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
-        <div class="hive-counter">{{ foldedfavorites.length }}</div>
+            <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#ffd700" stroke-width="7.2%" fill="#ffd700" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
+        <div class="hive-counter">0</div>
         </h4>
         <div v-if="!hidden">
             <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" class="hive-header">
@@ -14,6 +14,9 @@
                  </div>
             </h4>
             <div class="hive-controls">
+                <div @click="addToFavorites">
+                    <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" :fill="currentIsFavorited" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
+                </div>
                 <button type="button" @click="updateData" class="hive-control hive-reload">&#x21bb;</button>
             </div>
             <div v-if="loading" class="hive-loading"><div>Loading</div></div>
@@ -24,12 +27,20 @@
             </div>
 
             <ul v-if="!loading && foldedfavorites.length" class="hive hive-list">
-                <li v-for="singleFav in foldedfavorites">
-                    {{singleFav.name}}
+                <li class="hive-list-item" v-for="singleFav in foldedfavorites">
+                    <div>
+                        <a :href="'https://www.avito.ru/user/'+singleFav.key+'/profile'">
+                            {{singleFav.name}}
+                        </a>
+                        {{singleFav.items.length}}
+                    </div>
+
+                    <button class="transparent-button" @click="removeFromFavorites(singleFav.key)">
+                        <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>ico-trash</title><path d="M4.6 8.006v9.988c0 .225.181.406.406.406h9.988a.405.405 0 0 0 .406-.406V8.006H4.6zM17 8v9.994A2.005 2.005 0 0 1 14.994 20H5.006A2.005 2.005 0 0 1 3 17.994V8H1.993A.994.994 0 0 1 1 7V4c0-.552.445-1 .993-1h16.014c.548 0 .993.444.993 1v3c0 .552-.445 1-.993 1H17zm-4.6-6.4H7.6V3H6V1.5C6 .672 6.668 0 7.505 0h4.99C13.326 0 14 .666 14 1.5V3h-1.6V1.6zm-9.8 3v1.8h14.8V4.6H2.6zm6.886 5.26h1v6.25h-1V9.86zM7 9.876h1v6.25H7v-6.25zm5 0h1v6.25h-1v-6.25z" fill-rule="nonzero" fill="#FB6162"/></svg>
+                    </button>
                 </li>
             </ul>
             <div class="hive-footer">
-                <svg @click="addToFavorites" width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" fill="#fff" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
                 <small class="hive-version-info" @dblclick="toggleDebug">0.0.0</small>
                 <div v-if="debug" class="hive-error-message">{{ error.message }}</div>
             </div>
@@ -43,6 +54,8 @@ const hivePosition = JSON.parse(localStorage.getItem('hive-position')) || {
     top: 30,
     left: 600
 };
+
+console.log('asd');
 const storage = require('./storage');
 
 let favorites = [];
@@ -59,7 +72,6 @@ export default {
                 offsetY: 0,
                 moving: false,
                 debug: false,
-                basePath: '',
                 error: { message: 'В Багдаде все спокойно' },
                 favorites,
                 selected: [],
@@ -69,18 +81,25 @@ export default {
         );
     },
     methods: {
-        toggleShowMore() {
-            this.$set(this, 'showMore', !this.showMore);
+        getLatestItems(profileUrl) {
+            return fetch(`/${profileUrl}/profile/items?shortcut=active&limit=100`).then(res => res.json());
         },
-        addReviewer() {},
-        addToFavorites() {
+        getProfileId() {
             const profileIdString = window.location.href.match(/\/\w+\/profile/g);
-            const title = document.querySelector('[data-marker="profilePublic/name"]');
             const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
-            storage.saveFavorite(profileId, title.innerText);
+            return profileId;
+        },
+        async addToFavorites() {
+            const title = document.querySelector('[data-marker="profilePublic/name"]');
+            const profileId = this.getProfileId();
+            const items = await this.getLatestItems(profileId);
+            storage.saveFavorite(profileId, { name: title.innerText, items: items.result.list });
             this.updateData();
         },
-        syncDataWithInput() {},
+        removeFromFavorites(key) {
+            storage.unSaveFavorite(key);
+            this.updateData();
+        },
         startMove(event) {
             this.$set(this, 'moving', true);
             this.$set(this, 'offsetX', event.offsetX);
@@ -110,16 +129,16 @@ export default {
     },
     computed: {
         foldedfavorites() {
-            const sorted = this.favorites;
-            if (this.showMore) {
-                return sorted;
-            }
-            return sorted.slice(0, 3);
+            return this.favorites;
+        },
+        currentIsFavorited() {
+            const profileId = this.getProfileId();
+            const exists = this.favorites.find(({ key }) => key === profileId);
+            return exists ? '#0AF' : '#fff';
         }
     },
     mounted() {
         this.updateData();
-
         document.body.addEventListener('mousemove', event => {
             if (this.moving && this.fixed) {
                 this.$set(this, 'top', event.clientY - this.offsetY);
@@ -153,6 +172,9 @@ export default {
 .hive-list-item
 {
     border-left: 3px solid transparent;
+    padding: 2px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .hive-list-item:nth-child(odd)
@@ -168,6 +190,7 @@ export default {
     display: flex;
 
     padding: 10px;
+    margin-bottom: 0;
 
     cursor: move;
     text-align: center;
@@ -328,11 +351,9 @@ export default {
 
 .hive-controls
 {
-    display: none;
 
-    background-color: #c1cbd6;
-
-    justify-content: center;
+    display: flex;
+    justify-content: space-evenly;
     align-items: center;
 }
 
@@ -381,6 +402,12 @@ export default {
 
     content: 'no data';
     text-align: center;
+}
+
+.transparent-button {
+    border: none;
+    background-color: transparent;
+    outline: none;
 }
 
 </style>
