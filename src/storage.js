@@ -35,4 +35,4 @@ function getFavorites() {
     return result;
 }
 
-module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites };
+module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist };

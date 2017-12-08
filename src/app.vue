@@ -55,7 +55,6 @@ const hivePosition = JSON.parse(localStorage.getItem('hive-position')) || {
     left: 600
 };
 
-console.log('asd');
 const storage = require('./storage');
 
 let favorites = [];
@@ -82,18 +81,17 @@ export default {
     },
     methods: {
         getLatestItems(profileUrl) {
-            return fetch(`/${profileUrl}/profile/items?shortcut=active&limit=100`).then(res => res.json());
+            return fetch(`/user/${profileUrl}/profile/items?shortcut=active&limit=100`).then(res => res.json());
         },
         getProfileId() {
             const profileIdString = window.location.href.match(/\/\w+\/profile/g);
             const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
             return profileId;
         },
-        async addToFavorites() {
+        addToFavorites() {
             const title = document.querySelector('[data-marker="profilePublic/name"]');
             const profileId = this.getProfileId();
-            const items = await this.getLatestItems(profileId);
-            storage.saveFavorite(profileId, { name: title.innerText, items: items.result.list });
+            storage.saveFavorite(profileId, { name: title.innerText, items: [] });
             this.updateData();
         },
         removeFromFavorites(key) {
@@ -116,9 +114,34 @@ export default {
             this.$set(this, 'debug', !this.debug);
             console.log(this.error);
         },
-        updateData() {
-            this.$set(this, 'favorites', storage.getFavorites());
-            this.$set(this, 'loading', false);
+        async updateData() {            
+            const items = storage.getFavorites();
+            Promise.all(items.map(async (singleItem) => {
+                const updatedItems = await this.getLatestItems(singleItem.key);
+                // console.log(singleItem, updatedItems.result.list);
+                if (updatedItems.result.list.length !== singleItem.items) {
+                    const newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
+                            if (singleSearchItem.items.some(singleSubItem => {
+                                return singleSubItem.id !== singleItem.key
+                            })) {
+                                return newArray;
+                            }
+                            return newArray.concat(newItems);
+                        }, [])
+                    console.log(newItems);
+                }
+                const newObj = { 
+                    key: singleItem.key,
+                    name: singleItem.name,
+                    items: updatedItems.result.list
+                };
+                storage.saveFavorite(singleItem.key, newObj);
+                return newObj;
+                
+            })).then((result) => {
+                this.$set(this, 'favorites', result);
+                this.$set(this, 'loading', false);
+            });
         },
         toggleWidget() {
             this.$set(this, 'hidden', !this.hidden);
