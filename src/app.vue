@@ -120,15 +120,15 @@ export default {
                 const updatedItems = await this.getLatestItems(singleItem.key);
                 // console.log(singleItem, updatedItems.result.list);
                 if (updatedItems.result.list.length !== singleItem.items) {
-                    const newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
-                            if (singleSearchItem.items.some(singleSubItem => {
-                                return singleSubItem.id !== singleItem.key
-                            })) {
-                                return newArray;
-                            }
-                            return newArray.concat(newItems);
-                        }, [])
-                    console.log(newItems);
+                    // const newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
+                    //         if (singleSearchItem.items.some(singleSubItem => {
+                    //             return singleSubItem.id !== singleItem.key
+                    //         })) {
+                    //             return newArray;
+                    //         }
+                    //         return newArray.concat(newItems);
+                    //     }, [])
+                    // console.log(newItems);
                 }
                 const newObj = { 
                     key: singleItem.key,
