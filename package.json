@@ -6,7 +6,7 @@
   "scripts": {
     "test": "eslint ./src/**/*.es6",
     "dev": "chokidar './src/**/*.*' -c 'npm run build'",
-    "build": "browserify ./src/index.es6 -o ./dist/floating-widget.js -t [ vueify babelify --presets [ es2015 ] ]"
+    "build": "browserify ./src/index.es6 -o ./extention/scripts/floating-widget.js -t [ vueify babelify --presets [ es2015 ] ]"
   },
   "keywords": [],
   "license": "MIT",

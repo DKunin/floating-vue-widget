@@ -1,33 +1,43 @@
 'use strict';
-// && cat ./src/prepend > ./dist/dist.js && cat ./dist/floating-widget.user.js >> ./dist/dist.js
-// Append hook for Vue instance
+
 const menuNode = document.querySelector('body');
 const div = document.createElement('div');
-div.className = 'reviewer-suggester';
+div.className = 'favorite-profiles';
 menuNode.appendChild(div, menuNode.firstChild);
 const Vue = require('vue');
 const App = require('./app.vue');
 
-// const title = document.querySelector('[data-marker="profilePublic/name"]');
-// const button = document.createElement('button');
-// button.innerText = 'избр';
-// title.appendChild(button);
+function loadTab(href) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+        var tab = tabs[0];
+        chrome.tabs.update(tab.id, { url: href });
+    });
+}
 
-Vue.config.devtools = true;
-new Vue({
-    el: '.reviewer-suggester',
+function getCurrentUrl() {
+    chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
+        chrome.tabs.sendMessage(
+            tabs[0].id,
+            { from: 'popup', subject: 'DOMInfo' },
+            function({ name, url }) {
+                mainApp.$set(mainApp, 'profileName', name);
+                mainApp.$set(mainApp, 'url', url);
+            }
+        );
+    });
+}
+
+const mainApp = new Vue({
+    el: '.favorite-profiles',
+    data() {
+        return {
+            url: '',
+            loadTab,
+            getCurrentUrl,
+            profileName: ''
+        };
+    },
     render(createElement) {
         return createElement(App);
     }
 });
-
-chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-  console.log(tabs[0]);
-});
-
-
-// Append vue script
-// const vuescript = document.createElement('script');
-// vuescript.src = 'https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.min.js';
-// const head = document.querySelector('head');
-// head.appendChild(vuescript);

@@ -1,6 +1,6 @@
 {
 	"name": "__MSG_appName__",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"manifest_version": 2,
 	"description": "__MSG_appDescription__",
 	"icons": {
@@ -11,38 +11,31 @@
 	"background": {
 		"scripts": [
 			"scripts/background.js"
-		]
+		],
+    	"persistent": false
 	},
 	"permissions": [
-		"tabs",
-		"http://*/*",
-		"https://*/*",
-		"background",
-		"contentSettings",
-		"cookies",
-		"*://*.google.com/",
-		"debugger",
-		"history",
-		"storage",
-		"webNavigation",
-		"webRequest",
-		"webRequestBlocking"
+	    "http://*/*",
+	    "https://*/*",
+	    "contextMenus",
+	    "activeTab",
+	    "notifications",
+	    "storage",
+    	"cookies"
 	],
 	"options_ui": {
 		"page": "options.html",
 		"chrome_style": true
 	},
+	"content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
 	"content_scripts": [
 		{
 			"matches": [
-				"http://*/*",
-				"https://*/*"
+				"https://*.avito.ru/*"
 			],
 			"js": [
 				"scripts/contentscript.js"
-			],
-			"run_at": "document_end",
-			"all_frames": false
+			]
 		}
 	],
 	"page_action": {

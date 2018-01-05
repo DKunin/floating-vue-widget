@@ -3,21 +3,12 @@
     <div 
         :class="{ 'hive-holder': true, 'hive-holder_fixed': fixed, 'hive-holder-minimized': hidden }"
         :style="fixed ? { top: top + 'px', left: left + 'px' } : {}">
-        <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" v-if="hidden" class="hive-header">
-            <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#ffd700" stroke-width="7.2%" fill="#ffd700" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
-        <div class="hive-counter">{{countAllNewOnes}}</div>
-        </h4>
         <div v-if="!hidden">
-            <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" class="hive-header">
-                 <div class="hive-no-events">
-                    Добавить в избранное
-                 </div>
-            </h4>
             <div class="hive-controls">
                 <div @click="addToFavorites" v-if="getProfileId()">
                     <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" :fill="currentIsFavorited" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
                 </div>
-                <button type="button" @click="updateData" class="hive-control hive-reload">&#x21bb;</button>
+                <button type="button" @click="reloadAndUpdateData" class="hive-control hive-reload">&#x21bb;</button>
             </div>
             <div v-if="loading" class="hive-loading"><div>Loading</div></div>
 
@@ -29,11 +20,16 @@
             <ul v-if="!loading && foldedfavorites.length" class="hive hive-list">
                 <li class="hive-list-item" v-for="singleFav in foldedfavorites">
                     <div>
-                        <a :class="singleFav.currentProfile ? 'current-favorite' : ''" :href="'https://www.avito.ru/user/'+singleFav.key+'/profile'">
+                        <a :class="singleFav.currentProfile ? 'current-favorite' : ''" @click="openProfile(singleFav.key)">
                             {{singleFav.name}}
                         </a>
                         {{singleFav.items.length}}
-                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems.length">({{singleFav.newItems.length}})</span>
+                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems.length">
+                            ({{singleFav.newItems.length}})
+                        </span>
+                        <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems.length">
+                            отм.
+                        </span>
 
                     </div>
 
@@ -83,37 +79,32 @@ export default {
     },
     methods: {
         getLatestItems(profileUrl) {
-            return fetch(`/user/${profileUrl}/profile/items?shortcut=active&limit=100`).then(res => res.json());
+            const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
+            return fetch(`${mainUrl[0]}/user/${profileUrl}/profile/items?shortcut=active&limit=100`).then(res => res.json());
         },
         getProfileId() {
-            const profileIdString = window.location.href.match(/\/\w+\/profile/g);
+            const profileIdString = this.$parent.url.match(/\/\w+\/profile/g);
             const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
             return profileId;
         },
         addToFavorites() {
-            const title = document.querySelector('[data-marker="profilePublic/name"]');
             const profileId = this.getProfileId();
-            storage.saveFavorite(profileId, { name: title.innerText, items: [] });
+            storage.saveFavorite(profileId, { name: this.$parent.profileName, items: [] });
             this.updateData();
         },
         removeFromFavorites(key) {
             storage.unSaveFavorite(key);
             this.updateData();
         },
-        startMove(event) {
-            this.$set(this, 'moving', true);
-            this.$set(this, 'offsetX', event.offsetX);
-            this.$set(this, 'offsetY', event.offsetY);
-        },
-        stopMove() {
-            this.$set(this, 'moving', false);
-            localStorage.setItem(
-                'hive-position',
-                JSON.stringify({ top: this.top, left: this.left })
-            );
-        },
         openLastOne(lastOne) {
-            window.location = lastOne[0].url;
+            const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
+            this.$parent.loadTab(`${mainUrl[0]}${lastOne[0].url}`);
+            setTimeout(this.reloadAndUpdateData, 200);
+        },
+        openProfile(key) {
+            const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
+            this.$parent.loadTab(`${mainUrl[0]}/user/${key}/profile`);
+            this.reloadAndUpdateData();
         },
         addToSeen(key) {
             const thisFavorite = storage.getFavorite(key);
@@ -134,7 +125,11 @@ export default {
         },
         async updateData() {
             const items = storage.getFavorites();
-            const currentPath = location.pathname;
+            const currentPath = this.$parent.url;
+            if (!this.$parent.url) {
+                setTimeout(this.updateData, 300);
+                return;
+            }
             Promise.all(items.map(async (singleItem) => {
                 const updatedItems = await this.getLatestItems(singleItem.key);
                 let newItems = [];
@@ -145,7 +140,7 @@ export default {
                             return singleExistingItem.id === singleSearchItem.id;
                         })
 
-                        const doesnExitButOpen = singleSearchItem.url === currentPath;
+                        const doesnExitButOpen = currentPath.includes(singleSearchItem.url);
                         if (!exists && doesnExitButOpen) {
                             newButSeen.push(singleSearchItem);
                         }
@@ -169,13 +164,15 @@ export default {
             })).then((result) => {
                 this.$set(this, 'favorites', result);
                 this.$set(this, 'loading', false);
+                const newOnes = result.reduce((newArray, singleItem) => newArray.concat(singleItem.newItems),[]).length || 0;
+                chrome.storage.sync.set({'newOnes': newOnes});
             });
         },
-        toggleWidget() {
-            this.$set(this, 'hidden', !this.hidden);
-        },
-        generatePosition() {
-            return `top: ${this.top}; left: ${this.left}`;
+        reloadAndUpdateData() {
+            this.$parent.getCurrentUrl();
+            setTimeout(() => {
+                this.updateData();
+            }, 200);
         }
     },
     computed: {
@@ -183,9 +180,7 @@ export default {
             return this.favorites;
         },
         countAllNewOnes() {
-            return this.favorites.reduce((newArray, singleItem) => {
-                return newArray.concat(singleItem.newItems);
-            },[]).length || 0;
+            return this.favorites.reduce((newArray, singleItem) => newArray.concat(singleItem.newItems),[]).length || 0;
         },
         currentIsFavorited() {
             const profileId = this.getProfileId();
@@ -194,26 +189,22 @@ export default {
         }
     },
     mounted() {
+        this.$parent.getCurrentUrl();
         this.updateData();
-        document.body.addEventListener('mousemove', event => {
-            if (this.moving && this.fixed) {
-                this.$set(this, 'top', event.clientY - this.offsetY);
-                this.$set(this, 'left', event.clientX - this.offsetX);
-            }
-        });
     },
     beforeDestroy() {}
 }
 </script>
 
 <style>
+body {
+    padding: 0;
+}
 .hive-reviewer
 {
     padding: 10px 5px;
 
     cursor: pointer;
-
-    border-radius: 3px;
 }
 
 .hive-svg-logo
@@ -259,16 +250,8 @@ export default {
 {
     font-family: PT Sans;
     z-index: 15;
-    top: 0;
-    right: 0;
-
     overflow: hidden;
-
     width: 250px;
-
-    border-radius: 3px;
-    background-color: white;
-    box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, .2);
 }
 
 .hive-holder.hive-holder_fixed
@@ -283,22 +266,6 @@ export default {
     width: auto;
     padding: 3px;
     position: relative;
-}
-
-.hive-counter {
-    position: absolute;
-    right: -12px;
-    top: -12px;
-    background-color: #FF6163;
-    border-radius: 50%;
-    color: white;
-    width: 20px;
-    padding: 4px;
-}
-
-.hive-holder.hive-holder-minimized.hive-holder_fixed {
-    right: auto;
-    overflow: visible;
 }
 
 .hive-holder-minimized .hive-header
