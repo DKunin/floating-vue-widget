@@ -1,7 +1,7 @@
 'use strict';
 // && cat ./src/prepend > ./dist/dist.js && cat ./dist/floating-widget.user.js >> ./dist/dist.js
 // Append hook for Vue instance
-const menuNode = document.querySelector('.chrome-chrome');
+const menuNode = document.querySelector('body');
 const div = document.createElement('div');
 div.className = 'reviewer-suggester';
 menuNode.appendChild(div, menuNode.firstChild);
@@ -20,6 +20,11 @@ new Vue({
         return createElement(App);
     }
 });
+
+chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+  console.log(tabs[0]);
+});
+
 
 // Append vue script
 // const vuescript = document.createElement('script');

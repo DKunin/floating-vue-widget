@@ -35,4 +35,8 @@ function getFavorites() {
     return result;
 }
 
-module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist };
+function getFavorite(profileId) {
+    return storageBook.get(profileId);
+}
+
+module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist, getFavorite };

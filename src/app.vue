@@ -5,7 +5,7 @@
         :style="fixed ? { top: top + 'px', left: left + 'px' } : {}">
         <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" v-if="hidden" class="hive-header">
             <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#ffd700" stroke-width="7.2%" fill="#ffd700" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
-        <div class="hive-counter">0</div>
+        <div class="hive-counter">{{countAllNewOnes}}</div>
         </h4>
         <div v-if="!hidden">
             <h4 v-on="{ dblclick: toggleWidget, mousedown: startMove, mouseup: stopMove }" class="hive-header">
@@ -14,7 +14,7 @@
                  </div>
             </h4>
             <div class="hive-controls">
-                <div @click="addToFavorites">
+                <div @click="addToFavorites" v-if="getProfileId()">
                     <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" :fill="currentIsFavorited" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
                 </div>
                 <button type="button" @click="updateData" class="hive-control hive-reload">&#x21bb;</button>
@@ -29,10 +29,12 @@
             <ul v-if="!loading && foldedfavorites.length" class="hive hive-list">
                 <li class="hive-list-item" v-for="singleFav in foldedfavorites">
                     <div>
-                        <a :href="'https://www.avito.ru/user/'+singleFav.key+'/profile'">
+                        <a :class="singleFav.currentProfile ? 'current-favorite' : ''" :href="'https://www.avito.ru/user/'+singleFav.key+'/profile'">
                             {{singleFav.name}}
                         </a>
                         {{singleFav.items.length}}
+                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems.length">({{singleFav.newItems.length}})</span>
+
                     </div>
 
                     <button class="transparent-button" @click="removeFromFavorites(singleFav.key)">
@@ -66,7 +68,7 @@ export default {
                 showMore: true,
                 loading: true,
                 hidden: false,
-                fixed: true,
+                fixed: false,
                 offsetX: 0,
                 offsetY: 0,
                 moving: false,
@@ -110,30 +112,56 @@ export default {
                 JSON.stringify({ top: this.top, left: this.left })
             );
         },
+        openLastOne(lastOne) {
+            window.location = lastOne[0].url;
+        },
+        addToSeen(key) {
+            const thisFavorite = storage.getFavorite(key);
+            const newObj = { 
+                key: thisFavorite.key,
+                name: thisFavorite.name,
+                items: thisFavorite.items.concat(thisFavorite.newItems),
+                newItems: [],
+                currentProfile: this.getProfileId() === thisFavorite.key
+            };
+            storage.saveFavorite(thisFavorite.key, newObj);
+            const items = storage.getFavorites();
+            this.$set(this, 'favorites', items);
+        },
         toggleDebug() {
             this.$set(this, 'debug', !this.debug);
             console.log(this.error);
         },
-        async updateData() {            
+        async updateData() {
             const items = storage.getFavorites();
+            const currentPath = location.pathname;
             Promise.all(items.map(async (singleItem) => {
                 const updatedItems = await this.getLatestItems(singleItem.key);
-                // console.log(singleItem, updatedItems.result.list);
-                if (updatedItems.result.list.length !== singleItem.items) {
-                    const newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
-                            if (singleSearchItem.items.some(singleSubItem => {
-                                return singleSubItem.id !== singleItem.key
-                            })) {
-                                return newArray;
-                            }
-                            return newArray.concat(newItems);
-                        }, [])
-                    console.log(newItems);
+                let newItems = [];
+                let newButSeen = [];
+                if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
+                    newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
+                        const exists = singleItem.items.find(singleExistingItem => {
+                            return singleExistingItem.id === singleSearchItem.id;
+                        })
+
+                        const doesnExitButOpen = singleSearchItem.url === currentPath;
+                        if (!exists && doesnExitButOpen) {
+                            newButSeen.push(singleSearchItem);
+                        }
+                        if (!exists && !doesnExitButOpen) {
+                            return newArray.concat(singleSearchItem);
+                        }
+                        return newArray;
+                    }, []);
                 }
+
                 const newObj = { 
                     key: singleItem.key,
                     name: singleItem.name,
-                    items: updatedItems.result.list
+                    items: singleItem.items.concat(newButSeen),
+                    newItems,
+                    currentProfile: this.getProfileId() === singleItem.key
                 };
                 storage.saveFavorite(singleItem.key, newObj);
                 return newObj;
@@ -153,6 +181,11 @@ export default {
     computed: {
         foldedfavorites() {
             return this.favorites;
+        },
+        countAllNewOnes() {
+            return this.favorites.reduce((newArray, singleItem) => {
+                return newArray.concat(singleItem.newItems);
+            },[]).length || 0;
         },
         currentIsFavorited() {
             const profileId = this.getProfileId();
@@ -225,9 +258,7 @@ export default {
 .hive-holder
 {
     font-family: PT Sans;
-
-    position: absolute;
-    z-index: 1;
+    z-index: 15;
     top: 0;
     right: 0;
 
@@ -432,5 +463,10 @@ export default {
     background-color: transparent;
     outline: none;
 }
-
+.new-items {
+    color: red;
+}
+.current-favorite {
+    font-weight: bold;
+}
 </style>
