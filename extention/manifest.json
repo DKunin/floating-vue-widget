@@ -1,10 +1,10 @@
 {
-	"name": "__MSG_appName__",
+	"name": "Favorite Seller Avito",
 	"version": "0.0.3",
 	"manifest_version": 2,
-	"description": "__MSG_appDescription__",
+	"description": "Add seller to favorites",
 	"icons": {
-		"16": "images/icon-16.png",
+		"19": "images/icon-19.png",
 		"128": "images/icon-128.png"
 	},
 	"default_locale": "en",
@@ -40,8 +40,7 @@
 	],
 	"page_action": {
 		"default_icon": {
-			"19": "images/icon-19.png",
-			"38": "images/icon-38.png"
+			"19": "images/icon-19.png"
 		},
 		"default_title": "favorite seller extention",
 		"default_popup": "popup.html"
