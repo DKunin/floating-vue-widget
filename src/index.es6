@@ -19,7 +19,7 @@ function getCurrentUrl() {
         chrome.tabs.sendMessage(
             tabs[0].id,
             { from: 'popup', subject: 'DOMInfo' },
-            function({ name, url }) {
+            function({ name, url } = { name: '', url: '' }) {
                 mainApp.$set(mainApp, 'profileName', name);
                 mainApp.$set(mainApp, 'url', url);
             }

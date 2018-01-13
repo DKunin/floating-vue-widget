@@ -9677,7 +9677,7 @@ module.exports={
 }
 
 },{}],76:[function(require,module,exports){
-var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("body {\n    padding: 0;\n}\n.fav-seller-list {\n    margin: 0;\n    padding: 0;\n}\n.fav-seller-list-item\n{\n    border-left: 3px solid transparent;\n    padding: 2px;\n    display: flex;\n    justify-content: space-between;\n}\n\n.fav-seller-list-item:nth-child(odd)\n{\n    background-color: #ecf0f1;\n}\n\n.fav-seller-holder\n{\n    font-family: PT Sans;\n    z-index: 15;\n    overflow: hidden;\n    width: 250px;\n}\n\n.fav-seller-footer\n{\n    padding: 4px;\n}\n\n.fav-seller-version-info\n{\n    font-size: .8em;\n\n    display: block;\n\n    text-align: center;\n}\n\n.fav-seller-loading\n{\n    display: flex;\n\n    min-height: 270px;\n\n    justify-content: center;\n    align-items: center;\n}\n\n.fav-seller-reload\n{\n    font-family: Lucida Sans Unicode;\n    font-size: 20px;\n\n    border: none;\n}\n\n.fav-seller-controls\n{\n\n    display: flex;\n    justify-content: space-evenly;\n    align-items: center;\n}\n\n.fav-seller-control\n{\n    color: white;\n    background-color: #2c3e50;\n}\n\n.fav-seller-control:active\n{\n    background-color: #95a5a6;\n}\n\n.fav-seller-control:active,\n.fav-seller-control:focus\n{\n    border: none;\n    outline: none;\n    box-shadow: none;\n}\n\n.fav-seller-no-data\n{\n    position: relative;\n\n    opacity: .3;\n\n    filter: grayscale(100%);\n}\n.fav-seller-no-data:before\n{\n    position: absolute;\n    top: 40px;\n    right: 0;\n    left: 0;\n\n    content: 'no data';\n    text-align: center;\n}\n\n.fav-seller-remove-button {\n    opacity: 0;\n    cursor: pointer;\n}\n\n.fav-seller-list-item:hover .fav-seller-remove-button {\n    opacity: 1;\n}\n\n.transparent-button {\n    border: none;\n    background-color: transparent;\n    outline: none;\n}\n\n.new-items {\n    color: red;\n}\n\n.current-favorite {\n    font-weight: bold;\n}")
+var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("body {\n    padding: 0;\n}\n.fav-seller-list {\n    margin: 0;\n    padding: 0;\n}\n.fav-seller-list-item\n{\n    border-left: 3px solid transparent;\n    padding: 2px;\n    display: flex;\n    justify-content: space-between;\n}\n\n.fav-seller-list-item:nth-child(odd)\n{\n    background-color: #ecf0f1;\n}\n\n.fav-seller-holder\n{\n    font-family: PT Sans;\n    z-index: 15;\n    overflow: hidden;\n    width: 250px;\n    min-height: 400px;\n}\n\n.fav-seller-footer\n{\n    padding: 4px;\n}\n\n.fav-seller-version-info\n{\n    font-size: .8em;\n\n    display: block;\n\n    text-align: center;\n}\n\n.fav-seller-loading\n{\n    display: flex;\n\n    min-height: 270px;\n\n    justify-content: center;\n    align-items: center;\n}\n\n.fav-seller-reload\n{\n    font-family: Lucida Sans Unicode;\n    font-size: 20px;\n\n    border: none;\n}\n\n.fav-seller-controls\n{\n\n    display: flex;\n    justify-content: space-evenly;\n    align-items: center;\n}\n\n.fav-seller-control\n{\n    color: white;\n    background-color: #2c3e50;\n}\n\n.fav-seller-control:active\n{\n    background-color: #95a5a6;\n}\n\n.fav-seller-control:active,\n.fav-seller-control:focus\n{\n    border: none;\n    outline: none;\n    box-shadow: none;\n}\n\n.fav-seller-no-data\n{\n    position: relative;\n\n    opacity: .3;\n\n    filter: grayscale(100%);\n}\n.fav-seller-no-data:before\n{\n    position: absolute;\n    top: 40px;\n    right: 0;\n    left: 0;\n\n    content: 'no data';\n    text-align: center;\n}\n\n.fav-seller-remove-button {\n    opacity: 0;\n    cursor: pointer;\n}\n\n.fav-seller-list-item:hover .fav-seller-remove-button {\n    opacity: 1;\n}\n\n.transparent-button {\n    border: none;\n    background-color: transparent;\n    outline: none;\n}\n\n.new-items {\n    color: red;\n}\n\n.current-favorite {\n    font-weight: bold;\n}")
 ;(function(){
 'use strict';
 
@@ -9705,9 +9705,13 @@ exports.default = {
         };
     },
     methods: {
-        getLatestItems: function getLatestItems(profileUrl) {
+        getLatestItems: function getLatestItems(singleItem) {
+            var lastUpdate = (new Date() - new Date(singleItem.singleItem)) / 1000 / 60 < 3;
+            if (lastUpdate) {
+                return singleItem;
+            }
             var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
-            return fetch(mainUrl[0] + '/user/' + profileUrl + '/profile/items?shortcut=active&limit=100').then(function (res) {
+            return fetch(mainUrl[0] + '/user/' + singleItem.key + '/profile/items?shortcut=active&limit=100&i=' + Math.random() * 1000).then(function (res) {
                 return res.json();
             });
         },
@@ -9728,12 +9732,11 @@ exports.default = {
         openLastOne: function openLastOne(lastOne) {
             var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab('' + mainUrl[0] + lastOne[0].url);
-            setTimeout(this.reloadAndUpdateData, 200);
+            storage.saveLocalSeen(lastOne[0].url);
         },
         openProfile: function openProfile(key) {
             var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(mainUrl[0] + '/user/' + key + '/profile');
-            this.reloadAndUpdateData();
         },
         addToSeen: function addToSeen(key) {
             var thisFavorite = storage.getFavorite(key);
@@ -9757,15 +9760,15 @@ exports.default = {
 
             var items = storage.getFavorites();
             var currentPath = this.$parent.url;
+            var localOpened = storage.getLocalSeen();
+            console.log(this.$parent.url, localOpened);
             if (!this.$parent.url) {
                 setTimeout(this.updateData, 1000);
                 return;
             }
-            this.$set(this, 'favorites', items);
-            this.$set(this, 'loading', false);
-            return;
+
             _promise2.default.all(items.map(async function (singleItem) {
-                var updatedItems = await _this.getLatestItems(singleItem.key);
+                var updatedItems = await _this.getLatestItems(singleItem);
                 var newItems = [];
                 var newButSeen = [];
                 if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
@@ -9774,7 +9777,8 @@ exports.default = {
                             return singleExistingItem.id === singleSearchItem.id;
                         });
 
-                        var doesnExitButOpen = currentPath.includes(singleSearchItem.url);
+                        var doesnExitButOpen = currentPath.includes(singleSearchItem.url) || localOpened.join('').includes(singleSearchItem.url);
+                        console.log(currentPath, doesnExitButOpen, localOpened, singleSearchItem.url);
                         if (!exists && doesnExitButOpen) {
                             newButSeen.push(singleSearchItem);
                         }
@@ -9790,6 +9794,7 @@ exports.default = {
                     name: singleItem.name,
                     items: singleItem.items.concat(newButSeen),
                     newItems: newItems,
+                    timeStamp: new Date(),
                     currentProfile: _this.getProfileId() === singleItem.key
                 };
                 storage.saveFavorite(singleItem.key, newObj);
@@ -9809,7 +9814,7 @@ exports.default = {
             this.$parent.getCurrentUrl();
             setTimeout(function () {
                 _this2.updateData();
-            }, 200);
+            }, 1000);
         }
     },
     computed: {
@@ -9828,6 +9833,7 @@ exports.default = {
     mounted: function mounted() {
         this.$parent.getCurrentUrl();
         this.updateData();
+
         chrome.runtime.onMessage.addListener(function (msg) {
             if (msg.from === 'contentscript' && msg.subject === 'addToFavorite') {
                 console.log(msg);
@@ -9875,7 +9881,7 @@ function getCurrentUrl() {
         chrome.tabs.sendMessage(
             tabs[0].id,
             { from: 'popup', subject: 'DOMInfo' },
-            function({ name, url }) {
+            function({ name, url } = { name: '', url: '' }) {
                 mainApp.$set(mainApp, 'profileName', name);
                 mainApp.$set(mainApp, 'url', url);
             }
@@ -9914,6 +9920,15 @@ function saveFavorite(profileId, data) {
     persist();
 }
 
+function saveLocalSeen(data) {
+    const localSeen = JSON.parse(localStorage.getItem('localSeen') || '[]');
+    localStorage.setItem('localSeen', JSON.stringify(localSeen.concat(data)));
+}
+
+function getLocalSeen() {
+    return JSON.parse(localStorage.getItem('localSeen') || '[]');
+}
+
 function unSaveFavorite(profileId) {
     storageBook.delete(profileId);
     persist();
@@ -9940,6 +9955,6 @@ function getFavorite(profileId) {
     return storageBook.get(profileId);
 }
 
-module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist, getFavorite };
+module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist, getFavorite, saveLocalSeen, getLocalSeen };
 
 },{}]},{},[77]);

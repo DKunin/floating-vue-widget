@@ -1,3 +1,5 @@
+
+
 chrome.runtime.onMessage.addListener(function(msg, sender) {
     if (msg.from === 'content' && msg.subject === 'showPageAction') {
         chrome.pageAction.show(sender.tab.id);
@@ -30,5 +32,5 @@ function setPageActionIcon(tabId, number) {
             tabId
         });
     };
-    img.src = "images/icon-16.png";
+    img.src = "images/icon-19.png";
 }
