@@ -13,6 +13,15 @@ function saveFavorite(profileId, data) {
     persist();
 }
 
+function saveLocalSeen(data) {
+    const localSeen = JSON.parse(localStorage.getItem('localSeen') || '[]');
+    localStorage.setItem('localSeen', JSON.stringify(localSeen.concat(data)));
+}
+
+function getLocalSeen() {
+    return JSON.parse(localStorage.getItem('localSeen') || '[]');
+}
+
 function unSaveFavorite(profileId) {
     storageBook.delete(profileId);
     persist();
@@ -35,4 +44,8 @@ function getFavorites() {
     return result;
 }
 
-module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist };
+function getFavorite(profileId) {
+    return storageBook.get(profileId);
+}
+
+module.exports = { saveFavorite, unSaveFavorite, toggleFavorite, getFavorites, persist, getFavorite, saveLocalSeen, getLocalSeen };
