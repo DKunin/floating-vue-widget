@@ -2,30 +2,24 @@
     <div 
         class="fav-seller-holder">
         <div>
-            <div class="fav-seller-controls">
-                <div @click="addToFavorites" v-if="getProfileId()">
-                    <svg width="21" height="21" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path stroke="#0AF" stroke-width="7.2%" :fill="currentIsFavorited" d="M6.162 16.876c-.325.194-.45.143-.363-.22l.993-4.588c.038-.153.02-.212-.102-.315l-3.517-3.16c-.289-.243-.206-.317.173-.346l4.692-.566c.16-.012.248-.076.31-.221l1.94-4.202c.145-.344.256-.344.402 0l1.968 4.202c.061.145.15.209.31.221l4.677.566c.379.03.476.06.187.303l-3.517 3.203c-.122.103-.14.162-.102.315l1.042 4.581c.088.363-.102.442-.426.248l-4.155-2.293c-.137-.082-.206-.082-.343 0l-4.17 2.272z"></path></svg>
-                </div>
-                <button hidden type="button" @click="reloadAndUpdateData" class="fav-seller-control fav-seller-reload">&#x21bb;</button>
-            </div>
             <div v-if="loading" class="fav-seller-loading"><div>Loading</div></div>
 
-            <div v-if="!loading && !foldedfavorites.length" class="fav-seller-loading">
+            <div v-if="!loading && !favorites.length" class="fav-seller-loading">
                 <div class="fav-seller-no-data">
                 </div>
             </div>
 
             <ul v-if="!loading" class="fav-seller-list">
-                <li class="fav-seller-list-item" v-for="singleFav in foldedfavorites">
+                <li class="fav-seller-list-item" v-for="singleFav in favorites">
                     <div>
                         <a :class="singleFav.currentProfile ? 'current-favorite' : ''" @click="openProfile(singleFav.key)">
                             {{singleFav.name}}
                         </a>
                         {{singleFav.items.length}}
-                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems.length">
-                            ({{singleFav.newItems.length}})
+                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems">
+                            ({{singleFav.newItems ? singleFav.newItems.length : ''}})
                         </span>
-                        <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems.length">
+                        <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems">
                             отм.
                         </span>
 
@@ -46,6 +40,7 @@
 
 <script>
 const storage = require('./storage');
+const storageChrome = require('../extention/scripts/src/storageChrome.es6');
 const packageJson = require('../package.json');
 
 export default {
@@ -71,15 +66,6 @@ export default {
             const profileIdString = this.$parent.url.match(/\/\w+\/profile/g);
             const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
             return profileId;
-        },
-        addToFavorites() {
-            const profileId = this.getProfileId();
-            storage.saveFavorite(profileId, { name: this.$parent.profileName, items: [] });
-            this.updateData();
-        },
-        removeFromFavorites(key) {
-            storage.unSaveFavorite(key);
-            this.updateData();
         },
         openLastOne(lastOne) {
             const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
@@ -107,83 +93,59 @@ export default {
             this.$set(this, 'debug', !this.debug);
             console.log(this.error);
         },
-        async updateData() {
-            const items = storage.getFavorites();
-            const currentPath = this.$parent.url;
-            const localOpened = storage.getLocalSeen();
-            console.log(this.$parent.url, localOpened);
-            if (!this.$parent.url) {
-                setTimeout(this.updateData, 1000);
-                return;
-            }
+        updateData() {
+            // const items = storage.getFavorites();
+            // const currentPath = this.$parent.url;
+            // const localOpened = storage.getLocalSeen();
 
-            Promise.all(items.map(async (singleItem) => {
+            // Promise.all(items.map(async (singleItem) => {
 
-                const updatedItems = await this.getLatestItems(singleItem);
-                let newItems = [];
-                let newButSeen = [];
-                if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
-                    newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
-                        const exists = singleItem.items.find(singleExistingItem => {
-                            return singleExistingItem.id === singleSearchItem.id;
-                        });
+            //     const updatedItems = await this.getLatestItems(singleItem);
+            //     let newItems = [];
+            //     let newButSeen = [];
+            //     if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
+            //         newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
+            //             const exists = singleItem.items.find(singleExistingItem => {
+            //                 return singleExistingItem.id === singleSearchItem.id;
+            //             });
 
-                        const doesnExitButOpen = currentPath.includes(singleSearchItem.url) || localOpened.join('').includes(singleSearchItem.url);
-                        console.log(currentPath, doesnExitButOpen, localOpened, singleSearchItem.url);
-                        if (!exists && doesnExitButOpen) {
-                            newButSeen.push(singleSearchItem);
-                        }
-                        if (!exists && !doesnExitButOpen) {
-                            return newArray.concat(singleSearchItem);
-                        }
-                        return newArray;
-                    }, []);
-                }
+            //             const doesnExitButOpen = currentPath.includes(singleSearchItem.url) || localOpened.join('').includes(singleSearchItem.url);
+            //             console.log(currentPath, doesnExitButOpen, localOpened, singleSearchItem.url);
+            //             if (!exists && doesnExitButOpen) {
+            //                 newButSeen.push(singleSearchItem);
+            //             }
+            //             if (!exists && !doesnExitButOpen) {
+            //                 return newArray.concat(singleSearchItem);
+            //             }
+            //             return newArray;
+            //         }, []);
+            //     }
 
-                const newObj = { 
-                    key: singleItem.key,
-                    name: singleItem.name,
-                    items: singleItem.items.concat(newButSeen),
-                    newItems,
-                    timeStamp: new Date(),
-                    currentProfile: this.getProfileId() === singleItem.key
-                };
-                storage.saveFavorite(singleItem.key, newObj);
-                return newObj;
+            //     const newObj = { 
+            //         key: singleItem.key,
+            //         name: singleItem.name,
+            //         items: singleItem.items.concat(newButSeen),
+            //         newItems,
+            //         timeStamp: new Date(),
+            //         currentProfile: this.getProfileId() === singleItem.key
+            //     };
+            //     storage.saveFavorite(singleItem.key, newObj);
+            //     return newObj;
                 
-            })).then((result) => {
-                this.$set(this, 'favorites', result);
-                this.$set(this, 'loading', false);
-                const newOnes = result.reduce((newArray, singleItem) => newArray.concat(singleItem.newItems),[]).length || 0;
-                chrome.storage.sync.set({ 'newOnes': newOnes });
-            });
-        },
-        reloadAndUpdateData() {
-            this.$parent.getCurrentUrl();
-            setTimeout(() => {
-                this.updateData();
-            }, 1000);
+            // })).then((result) => {
+            //     this.$set(this, 'favorites', result);
+            //     this.$set(this, 'loading', false);
+            //     const newOnes = result.reduce((newArray, singleItem) => newArray.concat(singleItem.newItems),[]).length || 0;
+            //     chrome.storage.sync.set({ 'newOnes': newOnes });
+            // });
         }
     },
-    computed: {
-        foldedfavorites() {
-            return this.favorites;
-        },
-        currentIsFavorited() {
-            const profileId = this.getProfileId();
-            const exists = this.favorites.find(({ key }) => key === profileId);
-            return exists ? '#0AF' : '#fff';
-        }
-    },
-    mounted() {
+    async mounted() {
         this.$parent.getCurrentUrl();
-        this.updateData();
-
-        chrome.runtime.onMessage.addListener(function(msg) {
-            if (msg.from === 'contentscript' && msg.subject === 'addToFavorite') {
-                console.log(msg);
-            }
-        });
+        const items = await storageChrome.getFavorites();
+        console.log(items);
+        this.$set(this, 'favorites', items);
+        this.$set(this, 'loading', false);
     },
     beforeDestroy() {}
 }

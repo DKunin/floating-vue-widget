@@ -4,9 +4,10 @@
   "private": false,
   "main": "index.js",
   "scripts": {
+
     "test": "eslint ./src/**/*.es6",
-    "dev": "chokidar './src/**/*.*' -c 'npm run build'",
-    "build": "browserify ./src/index.es6 -o ./extention/scripts/floating-widget.js -t [ vueify babelify --presets [ es2015 ] ]"
+    "dev": "chokidar './src/**/*.*' './extention/scripts/src/*.es6' -c 'npm run build'",
+    "build": "browserify ./src/index.es6 -o ./extention/scripts/floating-widget.js -t [ vueify babelify --presets [ es2015 ] ] && browserify ./extention/scripts/src/background.es6 -o ./extention/scripts/background.js -t [ babelify --presets [ es2015 ] ]"
   },
   "keywords": [],
   "license": "MIT",
