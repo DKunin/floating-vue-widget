@@ -11,6 +11,7 @@ function profileId(url) {
 }
 
 const ADD_TO_FAVORITES = 'Добавить продавца в избранное';
+
 if (title && title.appendChild) {
     const sellerName = title.innerText;
     favoriteButton = document.createElement('a');
@@ -69,14 +70,14 @@ chrome.runtime.onMessage.addListener(function(msg, sender, response) {
     }
 });
 
-// function updateIcon() {
-//     chrome.storage.sync.get(null, function(items) {
-//         chrome.runtime.sendMessage({
-//             from: 'popup',
-//             subject: 'newInfo',
-//             data: items.newOnes
-//         });
-//     });
-// }
+function updateIcon() {
+    chrome.storage.sync.get(null, function(items) {
+        chrome.runtime.sendMessage({
+            from: 'popup',
+            subject: 'newInfo',
+            data: items.newOnes
+        });
+    });
+}
 
-// setInterval(updateIcon, 3000);
+setInterval(updateIcon, 3000);

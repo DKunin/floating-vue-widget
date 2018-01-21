@@ -4,13 +4,18 @@
 var setIcon = require('./set-icon.es6');
 var storage = require('./storageChrome.es6');
 
+var currentUrl = void 0;
+
 chrome.runtime.onMessage.addListener(function (msg, sender) {
     if (msg.from === 'content' && msg.subject === 'showPageAction') {
         chrome.pageAction.show(sender.tab.id);
     }
 
     if (msg.from === 'contentscript' && msg.subject === 'addToFavorite') {
-        storage.saveFavorite(msg.data.profileId, { name: msg.data.name, items: [] });
+        storage.saveFavorite(msg.data.profileId, {
+            name: msg.data.name,
+            items: []
+        });
     }
 
     if (msg.from === 'contentscript' && msg.subject === 'removeFromFavorite') {
@@ -21,6 +26,69 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
         setIcon(sender.tab.id, msg.data);
     }
 });
+
+function fetchLatest(singleItem, url) {
+    var lastUpdate = (new Date() - new Date(singleItem.timeStamp)) / 1000 / 60 < 3;
+
+    console.log(lastUpdate, singleItem.timeStamp);
+    if (true && lastUpdate) {
+        return singleItem;
+    }
+    var mainUrl = url.match(/https:\/\/.+\.ru/);
+    return fetch(mainUrl[0] + '/user/' + singleItem.key + '/profile/items?shortcut=active&limit=100').then(function (res) {
+        return res.json();
+    });
+}
+
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+    console.log(tab.url);
+    if (changeInfo.status === 'complete' && tab.url.includes('avito')) {
+        currentUrl = tab.url;
+        updateData(currentUrl);
+    }
+});
+
+async function updateData(url) {
+    var items = await storage.getFavorites();
+
+    Promise.all(items.map(async function (singleItem) {
+        var updatedItems = await fetchLatest(singleItem, url);
+        var newItems = [];
+        var newButSeen = [];
+        if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
+            newItems = updatedItems.result.list.reduce(function (newArray, singleSearchItem) {
+                var exists = singleItem.items.find(function (singleExistingItem) {
+                    return singleExistingItem.id === singleSearchItem.id;
+                });
+
+                var doesnExitButOpen = url.includes(singleSearchItem.url);
+
+                if (!exists && doesnExitButOpen) {
+                    newButSeen.push(singleSearchItem);
+                }
+                if (!exists && !doesnExitButOpen) {
+                    return newArray.concat(singleSearchItem);
+                }
+                return newArray;
+            }, []);
+        }
+
+        var newObj = {
+            key: singleItem.key,
+            name: singleItem.name,
+            items: singleItem.items.concat(newButSeen),
+            newItems: newItems,
+            timeStamp: new Date()
+        };
+        storage.saveFavorite(singleItem.key, newObj);
+        return newObj;
+    })).then(function (result) {
+        var newOnes = result.reduce(function (newArray, singleItem) {
+            return newArray.concat(singleItem.newItems);
+        }, []).length || 0;
+        chrome.storage.sync.set({ newOnes: newOnes });
+    });
+}
 
 },{"./set-icon.es6":2,"./storageChrome.es6":3}],2:[function(require,module,exports){
 'use strict';

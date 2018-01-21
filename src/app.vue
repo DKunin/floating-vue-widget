@@ -54,96 +54,32 @@ export default {
         };
     },
     methods: {
-        getLatestItems(singleItem) {
-            const lastUpdate = (new Date() - new Date(singleItem.singleItem)) / 1000 / 60 < 3;
-            if (lastUpdate) {
-                return singleItem;
-            }
-            const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
-            return fetch(`${mainUrl[0]}/user/${singleItem.key}/profile/items?shortcut=active&limit=100&i=${Math.random() * 1000}`).then(res => res.json());
-        },
-        getProfileId() {
-            const profileIdString = this.$parent.url.match(/\/\w+\/profile/g);
-            const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
-            return profileId;
+        // getProfileId() {
+        //     const profileIdString = this.$parent.url.match(/\/\w+\/profile/g);
+        //     const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
+        //     return profileId;
+        // },
+        async removeFromFavorites(key) {
+            storageChrome.unSaveFavorite(key);
+            const items = await storageChrome.getFavorites();
+            this.$set(this, 'favorites', items);
         },
         openLastOne(lastOne) {
             const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(`${mainUrl[0]}${lastOne[0].url}`);
-            storage.saveLocalSeen(lastOne[0].url);
         },
         openProfile(key) {
             const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(`${mainUrl[0]}/user/${key}/profile`);
         },
-        addToSeen(key) {
-            const thisFavorite = storage.getFavorite(key);
-            const newObj = { 
-                key: thisFavorite.key,
-                name: thisFavorite.name,
-                items: thisFavorite.items.concat(thisFavorite.newItems),
-                newItems: [],
-                currentProfile: this.getProfileId() === thisFavorite.key
-            };
-            storage.saveFavorite(thisFavorite.key, newObj);
-            const items = storage.getFavorites();
-            this.$set(this, 'favorites', items);
-        },
         toggleDebug() {
             this.$set(this, 'debug', !this.debug);
             console.log(this.error);
-        },
-        updateData() {
-            // const items = storage.getFavorites();
-            // const currentPath = this.$parent.url;
-            // const localOpened = storage.getLocalSeen();
-
-            // Promise.all(items.map(async (singleItem) => {
-
-            //     const updatedItems = await this.getLatestItems(singleItem);
-            //     let newItems = [];
-            //     let newButSeen = [];
-            //     if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
-            //         newItems = updatedItems.result.list.reduce((newArray, singleSearchItem) => {
-            //             const exists = singleItem.items.find(singleExistingItem => {
-            //                 return singleExistingItem.id === singleSearchItem.id;
-            //             });
-
-            //             const doesnExitButOpen = currentPath.includes(singleSearchItem.url) || localOpened.join('').includes(singleSearchItem.url);
-            //             console.log(currentPath, doesnExitButOpen, localOpened, singleSearchItem.url);
-            //             if (!exists && doesnExitButOpen) {
-            //                 newButSeen.push(singleSearchItem);
-            //             }
-            //             if (!exists && !doesnExitButOpen) {
-            //                 return newArray.concat(singleSearchItem);
-            //             }
-            //             return newArray;
-            //         }, []);
-            //     }
-
-            //     const newObj = { 
-            //         key: singleItem.key,
-            //         name: singleItem.name,
-            //         items: singleItem.items.concat(newButSeen),
-            //         newItems,
-            //         timeStamp: new Date(),
-            //         currentProfile: this.getProfileId() === singleItem.key
-            //     };
-            //     storage.saveFavorite(singleItem.key, newObj);
-            //     return newObj;
-                
-            // })).then((result) => {
-            //     this.$set(this, 'favorites', result);
-            //     this.$set(this, 'loading', false);
-            //     const newOnes = result.reduce((newArray, singleItem) => newArray.concat(singleItem.newItems),[]).length || 0;
-            //     chrome.storage.sync.set({ 'newOnes': newOnes });
-            // });
         }
     },
     async mounted() {
         this.$parent.getCurrentUrl();
         const items = await storageChrome.getFavorites();
-        console.log(items);
         this.$set(this, 'favorites', items);
         this.$set(this, 'loading', false);
     },

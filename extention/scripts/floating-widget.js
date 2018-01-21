@@ -8418,53 +8418,27 @@ exports.default = {
         };
     },
     methods: {
-        getLatestItems: function getLatestItems(singleItem) {
-            var lastUpdate = (new Date() - new Date(singleItem.singleItem)) / 1000 / 60 < 3;
-            if (lastUpdate) {
-                return singleItem;
-            }
-            var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
-            return fetch(mainUrl[0] + '/user/' + singleItem.key + '/profile/items?shortcut=active&limit=100&i=' + Math.random() * 1000).then(function (res) {
-                return res.json();
-            });
-        },
-        getProfileId: function getProfileId() {
-            var profileIdString = this.$parent.url.match(/\/\w+\/profile/g);
-            var profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
-            return profileId;
+        removeFromFavorites: async function removeFromFavorites(key) {
+            storageChrome.unSaveFavorite(key);
+            var items = await storageChrome.getFavorites();
+            this.$set(this, 'favorites', items);
         },
         openLastOne: function openLastOne(lastOne) {
             var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab('' + mainUrl[0] + lastOne[0].url);
-            storage.saveLocalSeen(lastOne[0].url);
         },
         openProfile: function openProfile(key) {
             var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(mainUrl[0] + '/user/' + key + '/profile');
         },
-        addToSeen: function addToSeen(key) {
-            var thisFavorite = storage.getFavorite(key);
-            var newObj = {
-                key: thisFavorite.key,
-                name: thisFavorite.name,
-                items: thisFavorite.items.concat(thisFavorite.newItems),
-                newItems: [],
-                currentProfile: this.getProfileId() === thisFavorite.key
-            };
-            storage.saveFavorite(thisFavorite.key, newObj);
-            var items = storage.getFavorites();
-            this.$set(this, 'favorites', items);
-        },
         toggleDebug: function toggleDebug() {
             this.$set(this, 'debug', !this.debug);
             console.log(this.error);
-        },
-        updateData: function updateData() {}
+        }
     },
     mounted: async function mounted() {
         this.$parent.getCurrentUrl();
         var items = await storageChrome.getFavorites();
-        console.log(items);
         this.$set(this, 'favorites', items);
         this.$set(this, 'loading', false);
     },
