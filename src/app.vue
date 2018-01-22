@@ -16,7 +16,7 @@
                             {{singleFav.name}}
                         </a>
                         {{singleFav.items.length}}
-                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems">
+                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems && singleFav.newItems.length">
                             ({{singleFav.newItems ? singleFav.newItems.length : ''}})
                         </span>
                         <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems">
@@ -41,6 +41,7 @@
 <script>
 const storage = require('./storage');
 const storageChrome = require('../extention/scripts/src/storageChrome.es6');
+const statistics = require('../extention/scripts/src/statistics.es6');
 const packageJson = require('../package.json');
 
 export default {
@@ -54,34 +55,55 @@ export default {
         };
     },
     methods: {
-        // getProfileId() {
-        //     const profileIdString = this.$parent.url.match(/\/\w+\/profile/g);
-        //     const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
-        //     return profileId;
-        // },
         async removeFromFavorites(key) {
             storageChrome.unSaveFavorite(key);
             const items = await storageChrome.getFavorites();
             this.$set(this, 'favorites', items);
         },
+        addToSeen(key) {
+            const thisFavorite = storageChrome.getFavorite(key);
+            const newObj = { 
+                key: thisFavorite.key,
+                name: thisFavorite.name,
+                items: thisFavorite.items.concat(thisFavorite.newItems),
+                newItems: []
+            };
+            storageChrome.saveFavorite(thisFavorite.key, newObj);
+            const items = storage.getFavorites();
+            this.$set(this, 'favorites', items);
+        },
         openLastOne(lastOne) {
             const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(`${mainUrl[0]}${lastOne[0].url}`);
+            this.$set(this, 'loading', true);
+            statistics('openedLastOne');
+            // setTimeout(async () => {
+            //     this.updateData();
+            // }, 500)
         },
         openProfile(key) {
             const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(`${mainUrl[0]}/user/${key}/profile`);
+            statistics('openProfile');
         },
         toggleDebug() {
             this.$set(this, 'debug', !this.debug);
             console.log(this.error);
+        },
+        async updateData() {
+            this.$parent.getCurrentUrl();
+            const items = await storageChrome.getFavorites();
+            this.$set(this, 'favorites', items);
+            this.$set(this, 'loading', false);
         }
     },
-    async mounted() {
-        this.$parent.getCurrentUrl();
-        const items = await storageChrome.getFavorites();
-        this.$set(this, 'favorites', items);
-        this.$set(this, 'loading', false);
+    mounted() {
+        this.updateData();
+        chrome.storage.onChanged.addListener(() => {
+            console.log('data update');
+            this.updateData();
+        });
+
     },
     beforeDestroy() {}
 }

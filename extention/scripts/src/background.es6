@@ -2,9 +2,9 @@
 
 const setIcon = require('./set-icon.es6');
 const storage = require('./storageChrome.es6');
+const statistics = require('./statistics.es6');
 
-let currentUrl;
-
+let currentTabUrl;
 chrome.runtime.onMessage.addListener(function(msg, sender) {
     if (msg.from === 'content' && msg.subject === 'showPageAction') {
         chrome.pageAction.show(sender.tab.id);
@@ -15,10 +15,15 @@ chrome.runtime.onMessage.addListener(function(msg, sender) {
             name: msg.data.name,
             items: []
         });
+        if (currentTabUrl) {
+            updateData(currentTabUrl);
+        }
+        statistics('addToFavorite');
     }
 
     if (msg.from === 'contentscript' && msg.subject === 'removeFromFavorite') {
         storage.unSaveFavorite(msg.data.profileId);
+        statistics('removeFromFavorite');
     }
 
     if (msg.from === 'popup' && msg.subject === 'newInfo') {
@@ -27,13 +32,11 @@ chrome.runtime.onMessage.addListener(function(msg, sender) {
 });
 
 function fetchLatest(singleItem, url) {
-    const lastUpdate =
-        (new Date() - new Date(singleItem.timeStamp)) / 1000 / 60 < 3;
-
-    console.log(lastUpdate, singleItem.timeStamp);
-    if (true && lastUpdate) {
-        return singleItem;
-    }
+    // const lastUpdate =
+    //     (new Date() - new Date(singleItem.timeStamp)) / 60 < 60;
+    // if (lastUpdate) {
+    //     return singleItem;
+    // }
     const mainUrl = url.match(/https:\/\/.+\.ru/);
     return fetch(
         `${mainUrl[0]}/user/${singleItem.key}/profile/items?shortcut=active&limit=100`
@@ -41,19 +44,34 @@ function fetchLatest(singleItem, url) {
 }
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    console.log(tab.url);
-    if (changeInfo.status === 'complete' && tab.url.includes('avito')) {
-        currentUrl = tab.url;
-        updateData(currentUrl);
+    currentTabUrl = tab.url;
+    if (
+        changeInfo.status === 'loading' &&
+        currentTabUrl &&
+        currentTabUrl.includes('avito')
+    ) {
+        updateData(currentTabUrl, true);
+    }
+    if (
+        changeInfo.status === 'complete' &&
+        currentTabUrl &&
+        currentTabUrl.includes('avito')
+    ) {
+        updateData(currentTabUrl);
     }
 });
 
-async function updateData(url) {
+async function updateData(url, localUpdate = false) {
     const items = await storage.getFavorites();
-
     Promise.all(
         items.map(async singleItem => {
-            const updatedItems = await fetchLatest(singleItem, url);
+            let updatedItems = [];
+            if (localUpdate) {
+                updatedItems = { result: { list: singleItem.items } };
+            } else {
+                updatedItems = await fetchLatest(singleItem, url);
+            }
+
             let newItems = [];
             let newButSeen = [];
             if (
@@ -74,12 +92,15 @@ async function updateData(url) {
                         const doesnExitButOpen = url.includes(
                             singleSearchItem.url
                         );
-
+                        const simplifiedItem = {
+                            id: singleSearchItem.id,
+                            url: singleSearchItem.url
+                        };
                         if (!exists && doesnExitButOpen) {
-                            newButSeen.push(singleSearchItem);
+                            newButSeen.push(simplifiedItem);
                         }
                         if (!exists && !doesnExitButOpen) {
-                            return newArray.concat(singleSearchItem);
+                            return newArray.concat(simplifiedItem);
                         }
                         return newArray;
                     },
@@ -92,7 +113,7 @@ async function updateData(url) {
                 name: singleItem.name,
                 items: singleItem.items.concat(newButSeen),
                 newItems,
-                timeStamp: new Date()
+                timeStamp: new Date().getTime()
             };
             storage.saveFavorite(singleItem.key, newObj);
             return newObj;
@@ -106,3 +127,12 @@ async function updateData(url) {
         chrome.storage.sync.set({ newOnes: newOnes });
     });
 }
+
+chrome.runtime.onInstalled.addListener(function(details) {
+    if (details.reason == 'install') {
+        statistics('installExtention');
+    } else if (details.reason == 'update') {
+        var thisVersion = chrome.runtime.getManifest().version;
+        statistics('updateExtention:' + thisVersion);
+    }
+});

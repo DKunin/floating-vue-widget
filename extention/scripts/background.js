@@ -3,9 +3,9 @@
 
 var setIcon = require('./set-icon.es6');
 var storage = require('./storageChrome.es6');
+var statistics = require('./statistics.es6');
 
-var currentUrl = void 0;
-
+var currentTabUrl = void 0;
 chrome.runtime.onMessage.addListener(function (msg, sender) {
     if (msg.from === 'content' && msg.subject === 'showPageAction') {
         chrome.pageAction.show(sender.tab.id);
@@ -16,10 +16,15 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
             name: msg.data.name,
             items: []
         });
+        if (currentTabUrl) {
+            updateData(currentTabUrl);
+        }
+        statistics('addToFavorite');
     }
 
     if (msg.from === 'contentscript' && msg.subject === 'removeFromFavorite') {
         storage.unSaveFavorite(msg.data.profileId);
+        statistics('removeFromFavorite');
     }
 
     if (msg.from === 'popup' && msg.subject === 'newInfo') {
@@ -28,12 +33,11 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
 });
 
 function fetchLatest(singleItem, url) {
-    var lastUpdate = (new Date() - new Date(singleItem.timeStamp)) / 1000 / 60 < 3;
-
-    console.log(lastUpdate, singleItem.timeStamp);
-    if (true && lastUpdate) {
-        return singleItem;
-    }
+    // const lastUpdate =
+    //     (new Date() - new Date(singleItem.timeStamp)) / 60 < 60;
+    // if (lastUpdate) {
+    //     return singleItem;
+    // }
     var mainUrl = url.match(/https:\/\/.+\.ru/);
     return fetch(mainUrl[0] + '/user/' + singleItem.key + '/profile/items?shortcut=active&limit=100').then(function (res) {
         return res.json();
@@ -41,18 +45,27 @@ function fetchLatest(singleItem, url) {
 }
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    console.log(tab.url);
-    if (changeInfo.status === 'complete' && tab.url.includes('avito')) {
-        currentUrl = tab.url;
-        updateData(currentUrl);
+    currentTabUrl = tab.url;
+    if (changeInfo.status === 'loading' && currentTabUrl && currentTabUrl.includes('avito')) {
+        updateData(currentTabUrl, true);
+    }
+    if (changeInfo.status === 'complete' && currentTabUrl && currentTabUrl.includes('avito')) {
+        updateData(currentTabUrl);
     }
 });
 
 async function updateData(url) {
-    var items = await storage.getFavorites();
+    var localUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
+    var items = await storage.getFavorites();
     Promise.all(items.map(async function (singleItem) {
-        var updatedItems = await fetchLatest(singleItem, url);
+        var updatedItems = [];
+        if (localUpdate) {
+            updatedItems = { result: { list: singleItem.items } };
+        } else {
+            updatedItems = await fetchLatest(singleItem, url);
+        }
+
         var newItems = [];
         var newButSeen = [];
         if (updatedItems.result && updatedItems.result.list.length !== singleItem.items.length) {
@@ -62,12 +75,15 @@ async function updateData(url) {
                 });
 
                 var doesnExitButOpen = url.includes(singleSearchItem.url);
-
+                var simplifiedItem = {
+                    id: singleSearchItem.id,
+                    url: singleSearchItem.url
+                };
                 if (!exists && doesnExitButOpen) {
-                    newButSeen.push(singleSearchItem);
+                    newButSeen.push(simplifiedItem);
                 }
                 if (!exists && !doesnExitButOpen) {
-                    return newArray.concat(singleSearchItem);
+                    return newArray.concat(simplifiedItem);
                 }
                 return newArray;
             }, []);
@@ -78,7 +94,7 @@ async function updateData(url) {
             name: singleItem.name,
             items: singleItem.items.concat(newButSeen),
             newItems: newItems,
-            timeStamp: new Date()
+            timeStamp: new Date().getTime()
         };
         storage.saveFavorite(singleItem.key, newObj);
         return newObj;
@@ -90,7 +106,16 @@ async function updateData(url) {
     });
 }
 
-},{"./set-icon.es6":2,"./storageChrome.es6":3}],2:[function(require,module,exports){
+chrome.runtime.onInstalled.addListener(function (details) {
+    if (details.reason == 'install') {
+        statistics('installExtention');
+    } else if (details.reason == 'update') {
+        var thisVersion = chrome.runtime.getManifest().version;
+        console.log('Updated from ' + details.previousVersion + ' to ' + thisVersion + '!');
+    }
+});
+
+},{"./set-icon.es6":2,"./statistics.es6":3,"./storageChrome.es6":4}],2:[function(require,module,exports){
 'use strict';
 
 function setIcon(tabId, number) {
@@ -98,22 +123,24 @@ function setIcon(tabId, number) {
     var img = document.createElement('img');
     var width = 19;
     img.onload = function () {
-        canvas.width = width;
-        canvas.height = width;
+        if (number) {
+            canvas.width = width;
+            canvas.height = width;
 
-        var context = canvas.getContext('2d');
-        context.drawImage(img, 0, 2);
-        context.fillStyle = '#ed1d24';
-        context.fillRect(width / 2 - 3, width / 2 - 3, width / 2 + 8, width / 2 + 8);
-        context.fillStyle = '#fff';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.font = '12px Arial';
-        context.fillText(number, width / 2 + 3, width / 2 + 3);
-        chrome.pageAction.setIcon({
-            imageData: context.getImageData(0, 0, width, width),
-            tabId: tabId
-        });
+            var context = canvas.getContext('2d');
+            context.drawImage(img, 0, 2);
+            context.fillStyle = '#ed1d24';
+            context.fillRect(width / 2 - 3, width / 2 - 3, width / 2 + 8, width / 2 + 8);
+            context.fillStyle = '#fff';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.font = '12px Arial';
+            context.fillText(number, width / 2 + 3, width / 2 + 3);
+            chrome.pageAction.setIcon({
+                imageData: context.getImageData(0, 0, width, width),
+                tabId: tabId
+            });
+        }
     };
     img.src = "images/icon-19.png";
 }
@@ -121,6 +148,13 @@ function setIcon(tabId, number) {
 module.exports = setIcon;
 
 },{}],3:[function(require,module,exports){
+'use strict';
+
+function sendStatisticsEvent() {}
+
+module.exports = sendStatisticsEvent;
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }

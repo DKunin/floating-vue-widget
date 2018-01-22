@@ -6,7 +6,9 @@ let favoriteButton;
 
 function profileId(url) {
     const profileIdString = url.match(/\/\w+\/profile/g);
-    const profileId = profileIdString ? profileIdString[0].replace('profile', '').replace(/\//g, '') : '';
+    const profileId = profileIdString
+        ? profileIdString[0].replace('profile', '').replace(/\//g, '')
+        : '';
     return profileId;
 }
 
@@ -49,20 +51,23 @@ chrome.runtime.sendMessage({
 
 function updateButtonText() {
     chrome.storage.sync.get(null, function(items) {
-        const allIds = (items.savedProfiles || []).map(singleArr => singleArr[0]);
-        const alreadySaved = allIds.filter(singleId => window.location.href.includes(singleId));
-        if (alreadySaved.length) {
-            favoriteButton.innerText = 'Удалить продавца из избранного';
-        } else {
-            favoriteButton.innerText = 'Добавить продавца в избранное';
+        const allIds = (items.savedProfiles || []).map(
+            singleArr => singleArr[0]
+        );
+        const alreadySaved = allIds.filter(singleId =>
+            window.location.href.includes(singleId)
+        );
+        if (favoriteButton) {
+            if (alreadySaved.length) {
+                favoriteButton.innerText = 'Удалить продавца из избранного';
+            } else {
+                favoriteButton.innerText = 'Добавить продавца в избранное';
+            }
         }
     });
-
 }
 
-chrome.storage.onChanged.addListener(function(changes, namespace) {
-    updateButtonText();
-});
+chrome.storage.onChanged.addListener(updateButtonText);
 
 chrome.runtime.onMessage.addListener(function(msg, sender, response) {
     if (msg.from === 'popup' && msg.subject === 'DOMInfo') {
