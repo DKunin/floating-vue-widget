@@ -39,7 +39,7 @@ function fetchLatest(singleItem, url) {
     //     return singleItem;
     // }
     var mainUrl = url.match(/https:\/\/.+\.ru/);
-    return fetch(mainUrl[0] + '/user/' + singleItem.key + '/profile/items?shortcut=active&limit=100').then(function (res) {
+    return fetch(mainUrl[0] + '/user/' + singleItem.key + '/profile/items?shortcut=active&limit=10').then(function (res) {
         return res.json();
     });
 }
@@ -111,7 +111,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
         statistics('installExtention');
     } else if (details.reason == 'update') {
         var thisVersion = chrome.runtime.getManifest().version;
-        console.log('Updated from ' + details.previousVersion + ' to ' + thisVersion + '!');
+        statistics('updateExtention:' + thisVersion);
     }
 });
 

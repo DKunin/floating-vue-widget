@@ -39,7 +39,7 @@ function fetchLatest(singleItem, url) {
     // }
     const mainUrl = url.match(/https:\/\/.+\.ru/);
     return fetch(
-        `${mainUrl[0]}/user/${singleItem.key}/profile/items?shortcut=active&limit=100`
+        `${mainUrl[0]}/user/${singleItem.key}/profile/items?shortcut=active&limit=10`
     ).then(res => res.json());
 }
 
