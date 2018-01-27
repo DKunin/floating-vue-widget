@@ -6,17 +6,18 @@ const statistics = require('./statistics.es6');
 
 let currentTabUrl;
 chrome.runtime.onMessage.addListener(function(msg, sender) {
-    if (msg.from === 'content' && msg.subject === 'showPageAction') {
+    if (msg.from === 'content' && msg.subject === 'showPageActuion') {
         chrome.pageAction.show(sender.tab.id);
     }
 
     if (msg.from === 'contentscript' && msg.subject === 'addToFavorite') {
         storage.saveFavorite(msg.data.profileId, {
             name: msg.data.name,
+            avatar: msg.data.avatar,
             items: []
         });
         if (currentTabUrl) {
-            updateData(currentTabUrl);
+            // updateData(currentTabUrl);
         }
         statistics('addToFavorite');
     }
@@ -50,14 +51,14 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         currentTabUrl &&
         currentTabUrl.includes('avito')
     ) {
-        updateData(currentTabUrl, true);
+        // updateData(currentTabUrl, true);
     }
     if (
         changeInfo.status === 'complete' &&
         currentTabUrl &&
         currentTabUrl.includes('avito')
     ) {
-        updateData(currentTabUrl);
+        // updateData(currentTabUrl);
     }
 });
 
@@ -111,6 +112,7 @@ async function updateData(url, localUpdate = false) {
             const newObj = {
                 key: singleItem.key,
                 name: singleItem.name,
+                avatar: singleItem.avatar,
                 items: singleItem.items.concat(newButSeen),
                 newItems,
                 timeStamp: new Date().getTime()

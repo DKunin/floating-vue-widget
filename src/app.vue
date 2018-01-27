@@ -15,13 +15,15 @@
                         <a :class="singleFav.currentProfile ? 'current-favorite' : ''" @click="openProfile(singleFav.key)">
                             {{singleFav.name}}
                         </a>
-                        {{singleFav.items.length}}
-                        <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems && singleFav.newItems.length">
-                            ({{singleFav.newItems ? singleFav.newItems.length : ''}})
-                        </span>
-                        <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems">
-                            отм.
-                        </span>
+                        <div v-if="false">
+                            {{singleFav.items.length}}
+                            <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems && singleFav.newItems.length">
+                                ({{singleFav.newItems ? singleFav.newItems.length : ''}})
+                            </span>
+                            <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems">
+                                отм.
+                            </span>
+                        </div>
 
                     </div>
 
