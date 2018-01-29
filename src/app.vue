@@ -1,42 +1,27 @@
 <template>
-    <div 
-        class="fav-seller-holder">
-        <div>
-            <div v-if="loading" class="fav-seller-loading"><div>Loading</div></div>
+    <div class="fav-seller-holder">
 
             <div v-if="!loading && !favorites.length" class="fav-seller-loading">
-                <div class="fav-seller-no-data">
-                </div>
+                <div class="fav-seller-no-data"></div>
             </div>
 
             <ul v-if="!loading" class="fav-seller-list">
                 <li class="fav-seller-list-item" v-for="singleFav in favorites">
-                    <div>
-                        <a :class="singleFav.currentProfile ? 'current-favorite' : ''" @click="openProfile(singleFav.key)">
-                            {{singleFav.name}}
-                        </a>
-                        <div v-if="false">
-                            {{singleFav.items.length}}
-                            <span @click="openLastOne(singleFav.newItems)" class="new-items" v-if="singleFav.newItems && singleFav.newItems.length">
-                                ({{singleFav.newItems ? singleFav.newItems.length : ''}})
-                            </span>
-                            <span @click="addToSeen(singleFav.key)" v-if="singleFav.newItems">
-                                отм.
-                            </span>
+                    <div class="fav-seller-list-item-info" @click="openProfile(singleFav.key)">
+                        <div class="fav-seller-list-item-avatar">
+                            <div class="fav-seller-list-item-image" :style="'background-image:' + singleFav.avatar "></div>
                         </div>
-
+                        <span class="fav-seller-list-item-name">
+                            {{singleFav.name}}
+                        </span>
                     </div>
-
-                    <button class="fav-seller-remove-button transparent-button" @click="removeFromFavorites(singleFav.key)">
-                        <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>ico-trash</title><path d="M4.6 8.006v9.988c0 .225.181.406.406.406h9.988a.405.405 0 0 0 .406-.406V8.006H4.6zM17 8v9.994A2.005 2.005 0 0 1 14.994 20H5.006A2.005 2.005 0 0 1 3 17.994V8H1.993A.994.994 0 0 1 1 7V4c0-.552.445-1 .993-1h16.014c.548 0 .993.444.993 1v3c0 .552-.445 1-.993 1H17zm-4.6-6.4H7.6V3H6V1.5C6 .672 6.668 0 7.505 0h4.99C13.326 0 14 .666 14 1.5V3h-1.6V1.6zm-9.8 3v1.8h14.8V4.6H2.6zm6.886 5.26h1v6.25h-1V9.86zM7 9.876h1v6.25H7v-6.25zm5 0h1v6.25h-1v-6.25z" fill-rule="nonzero" fill="#FB6162"/></svg>
-                    </button>
                 </li>
             </ul>
-            <div class="fav-seller-footer">
+
+            <div class="fav-seller-footer" hidden>
                 <small class="fav-seller-version-info" @dblclick="toggleDebug">{{package.version}}</small>
                 <div v-if="debug" class="fav-seller-error-message">{{ error.message }}</div>
             </div>
-        </div>
     </div>
 </template>
 
@@ -57,32 +42,6 @@ export default {
         };
     },
     methods: {
-        async removeFromFavorites(key) {
-            storageChrome.unSaveFavorite(key);
-            const items = await storageChrome.getFavorites();
-            this.$set(this, 'favorites', items);
-        },
-        addToSeen(key) {
-            const thisFavorite = storageChrome.getFavorite(key);
-            const newObj = { 
-                key: thisFavorite.key,
-                name: thisFavorite.name,
-                items: thisFavorite.items.concat(thisFavorite.newItems),
-                newItems: []
-            };
-            storageChrome.saveFavorite(thisFavorite.key, newObj);
-            const items = storage.getFavorites();
-            this.$set(this, 'favorites', items);
-        },
-        openLastOne(lastOne) {
-            const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
-            this.$parent.loadTab(`${mainUrl[0]}${lastOne[0].url}`);
-            this.$set(this, 'loading', true);
-            statistics('openedLastOne');
-            // setTimeout(async () => {
-            //     this.updateData();
-            // }, 500)
-        },
         openProfile(key) {
             const mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(`${mainUrl[0]}/user/${key}/profile`);
@@ -102,7 +61,6 @@ export default {
     mounted() {
         this.updateData();
         chrome.storage.onChanged.addListener(() => {
-            console.log('data update');
             this.updateData();
         });
 
@@ -125,12 +83,40 @@ body {
     padding: 2px;
     display: flex;
     justify-content: space-between;
+    cursor: pointer;
+}
+.fav-seller-list-item:hover .fav-seller-list-item-name {
+    color: #ff6163;
 }
 
-.fav-seller-list-item:nth-child(odd)
-{
-    background-color: #ecf0f1;
+.fav-seller-list-item-info {
+    display: flex;
+    padding: 2px;
+    align-items: center;
 }
+
+.fav-seller-list-item-avatar {
+    width: 50px;
+    height: 50px;
+}
+
+.fav-seller-list-item-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+}
+
+.fav-seller-list-item-name {
+    padding: 5px;
+    white-space: nowrap;
+    text-overflow: initial;
+    overflow: hidden;
+    color: #0091d9;
+}
+
 
 .fav-seller-holder
 {

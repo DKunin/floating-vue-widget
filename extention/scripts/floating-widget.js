@@ -8402,7 +8402,7 @@ module.exports={
 }
 
 },{}],8:[function(require,module,exports){
-var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("body {\n    padding: 0;\n}\n.fav-seller-list {\n    margin: 0;\n    padding: 0;\n}\n.fav-seller-list-item\n{\n    border-left: 3px solid transparent;\n    padding: 2px;\n    display: flex;\n    justify-content: space-between;\n}\n\n.fav-seller-list-item:nth-child(odd)\n{\n    background-color: #ecf0f1;\n}\n\n.fav-seller-holder\n{\n    font-family: PT Sans;\n    z-index: 15;\n    overflow: hidden;\n    width: 250px;\n    min-height: 400px;\n}\n\n.fav-seller-footer\n{\n    padding: 4px;\n}\n\n.fav-seller-version-info\n{\n    font-size: .8em;\n\n    display: block;\n\n    text-align: center;\n}\n\n.fav-seller-loading\n{\n    display: flex;\n\n    min-height: 270px;\n\n    justify-content: center;\n    align-items: center;\n}\n\n.fav-seller-reload\n{\n    font-family: Lucida Sans Unicode;\n    font-size: 20px;\n\n    border: none;\n}\n\n.fav-seller-controls\n{\n\n    display: flex;\n    justify-content: space-evenly;\n    align-items: center;\n}\n\n.fav-seller-control\n{\n    color: white;\n    background-color: #2c3e50;\n}\n\n.fav-seller-control:active\n{\n    background-color: #95a5a6;\n}\n\n.fav-seller-control:active,\n.fav-seller-control:focus\n{\n    border: none;\n    outline: none;\n    box-shadow: none;\n}\n\n.fav-seller-no-data\n{\n    position: relative;\n\n    opacity: .3;\n\n    filter: grayscale(100%);\n}\n.fav-seller-no-data:before\n{\n    position: absolute;\n    top: 40px;\n    right: 0;\n    left: 0;\n\n    content: 'no data';\n    text-align: center;\n}\n\n.fav-seller-remove-button {\n    opacity: 0;\n    cursor: pointer;\n}\n\n.fav-seller-list-item:hover .fav-seller-remove-button {\n    opacity: 1;\n}\n\n.transparent-button {\n    border: none;\n    background-color: transparent;\n    outline: none;\n}\n\n.new-items {\n    color: red;\n}\n\n.current-favorite {\n    font-weight: bold;\n}")
+var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("body {\n    padding: 0;\n}\n.fav-seller-list {\n    margin: 0;\n    padding: 0;\n}\n.fav-seller-list-item\n{\n    border-left: 3px solid transparent;\n    padding: 2px;\n    display: flex;\n    justify-content: space-between;\n    cursor: pointer;\n}\n.fav-seller-list-item:hover .fav-seller-list-item-name {\n    color: #ff6163;\n}\n\n.fav-seller-list-item-info {\n    display: flex;\n    padding: 2px;\n    align-items: center;\n}\n\n.fav-seller-list-item-avatar {\n    width: 50px;\n    height: 50px;\n}\n\n.fav-seller-list-item-image {\n    width: 100%;\n    height: 100%;\n    border-radius: 50%;\n    background-size: cover;\n    background-repeat: no-repeat;\n\n}\n\n.fav-seller-list-item-name {\n    padding: 5px;\n    white-space: nowrap;\n    text-overflow: initial;\n    overflow: hidden;\n    color: #0091d9;\n}\n\n\n.fav-seller-holder\n{\n    font-family: PT Sans;\n    z-index: 15;\n    overflow: hidden;\n    width: 250px;\n    min-height: 400px;\n}\n\n.fav-seller-footer\n{\n    padding: 4px;\n}\n\n.fav-seller-version-info\n{\n    font-size: .8em;\n\n    display: block;\n\n    text-align: center;\n}\n\n.fav-seller-loading\n{\n    display: flex;\n\n    min-height: 270px;\n\n    justify-content: center;\n    align-items: center;\n}\n\n.fav-seller-reload\n{\n    font-family: Lucida Sans Unicode;\n    font-size: 20px;\n\n    border: none;\n}\n\n.fav-seller-controls\n{\n\n    display: flex;\n    justify-content: space-evenly;\n    align-items: center;\n}\n\n.fav-seller-control\n{\n    color: white;\n    background-color: #2c3e50;\n}\n\n.fav-seller-control:active\n{\n    background-color: #95a5a6;\n}\n\n.fav-seller-control:active,\n.fav-seller-control:focus\n{\n    border: none;\n    outline: none;\n    box-shadow: none;\n}\n\n.fav-seller-no-data\n{\n    position: relative;\n\n    opacity: .3;\n\n    filter: grayscale(100%);\n}\n.fav-seller-no-data:before\n{\n    position: absolute;\n    top: 40px;\n    right: 0;\n    left: 0;\n\n    content: 'no data';\n    text-align: center;\n}\n\n.fav-seller-remove-button {\n    opacity: 0;\n    cursor: pointer;\n}\n\n.fav-seller-list-item:hover .fav-seller-remove-button {\n    opacity: 1;\n}\n\n.transparent-button {\n    border: none;\n    background-color: transparent;\n    outline: none;\n}\n\n.new-items {\n    color: red;\n}\n\n.current-favorite {\n    font-weight: bold;\n}")
 ;(function(){
 'use strict';
 
@@ -8427,29 +8427,6 @@ exports.default = {
         };
     },
     methods: {
-        removeFromFavorites: async function removeFromFavorites(key) {
-            storageChrome.unSaveFavorite(key);
-            var items = await storageChrome.getFavorites();
-            this.$set(this, 'favorites', items);
-        },
-        addToSeen: function addToSeen(key) {
-            var thisFavorite = storageChrome.getFavorite(key);
-            var newObj = {
-                key: thisFavorite.key,
-                name: thisFavorite.name,
-                items: thisFavorite.items.concat(thisFavorite.newItems),
-                newItems: []
-            };
-            storageChrome.saveFavorite(thisFavorite.key, newObj);
-            var items = storage.getFavorites();
-            this.$set(this, 'favorites', items);
-        },
-        openLastOne: function openLastOne(lastOne) {
-            var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
-            this.$parent.loadTab('' + mainUrl[0] + lastOne[0].url);
-            this.$set(this, 'loading', true);
-            statistics('openedLastOne');
-        },
         openProfile: function openProfile(key) {
             var mainUrl = this.$parent.url.match(/https:\/\/.+\.ru/);
             this.$parent.loadTab(mainUrl[0] + '/user/' + key + '/profile');
@@ -8471,7 +8448,6 @@ exports.default = {
 
         this.updateData();
         chrome.storage.onChanged.addListener(function () {
-            console.log('data update');
             _this.updateData();
         });
     },
@@ -8481,7 +8457,7 @@ exports.default = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"fav-seller-holder"},[_c('div',[(_vm.loading)?_c('div',{staticClass:"fav-seller-loading"},[_c('div',[_vm._v("Loading")])]):_vm._e(),_vm._v(" "),(!_vm.loading && !_vm.favorites.length)?_c('div',{staticClass:"fav-seller-loading"},[_c('div',{staticClass:"fav-seller-no-data"})]):_vm._e(),_vm._v(" "),(!_vm.loading)?_c('ul',{staticClass:"fav-seller-list"},_vm._l((_vm.favorites),function(singleFav){return _c('li',{staticClass:"fav-seller-list-item"},[_c('div',[_c('a',{class:singleFav.currentProfile ? 'current-favorite' : '',on:{"click":function($event){_vm.openProfile(singleFav.key)}}},[_vm._v("\n                        "+_vm._s(singleFav.name)+"\n                    ")]),_vm._v(" "),(false)?_c('div',[_vm._v("\n                        "+_vm._s(singleFav.items.length)+"\n                        "),(singleFav.newItems && singleFav.newItems.length)?_c('span',{staticClass:"new-items",on:{"click":function($event){_vm.openLastOne(singleFav.newItems)}}},[_vm._v("\n                            ("+_vm._s(singleFav.newItems ? singleFav.newItems.length : '')+")\n                        ")]):_vm._e(),_vm._v(" "),(singleFav.newItems)?_c('span',{on:{"click":function($event){_vm.addToSeen(singleFav.key)}}},[_vm._v("\n                            отм.\n                        ")]):_vm._e()]):_vm._e()]),_vm._v(" "),_c('button',{staticClass:"fav-seller-remove-button transparent-button",on:{"click":function($event){_vm.removeFromFavorites(singleFav.key)}}},[_c('svg',{attrs:{"width":"20","height":"20","viewBox":"0 0 20 20","xmlns":"http://www.w3.org/2000/svg"}},[_c('title',[_vm._v("ico-trash")]),_c('path',{attrs:{"d":"M4.6 8.006v9.988c0 .225.181.406.406.406h9.988a.405.405 0 0 0 .406-.406V8.006H4.6zM17 8v9.994A2.005 2.005 0 0 1 14.994 20H5.006A2.005 2.005 0 0 1 3 17.994V8H1.993A.994.994 0 0 1 1 7V4c0-.552.445-1 .993-1h16.014c.548 0 .993.444.993 1v3c0 .552-.445 1-.993 1H17zm-4.6-6.4H7.6V3H6V1.5C6 .672 6.668 0 7.505 0h4.99C13.326 0 14 .666 14 1.5V3h-1.6V1.6zm-9.8 3v1.8h14.8V4.6H2.6zm6.886 5.26h1v6.25h-1V9.86zM7 9.876h1v6.25H7v-6.25zm5 0h1v6.25h-1v-6.25z","fill-rule":"nonzero","fill":"#FB6162"}})])])])})):_vm._e(),_vm._v(" "),_c('div',{staticClass:"fav-seller-footer"},[_c('small',{staticClass:"fav-seller-version-info",on:{"dblclick":_vm.toggleDebug}},[_vm._v(_vm._s(_vm.package.version))]),_vm._v(" "),(_vm.debug)?_c('div',{staticClass:"fav-seller-error-message"},[_vm._v(_vm._s(_vm.error.message))]):_vm._e()])])])}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"fav-seller-holder"},[(!_vm.loading && !_vm.favorites.length)?_c('div',{staticClass:"fav-seller-loading"},[_c('div',{staticClass:"fav-seller-no-data"})]):_vm._e(),_vm._v(" "),(!_vm.loading)?_c('ul',{staticClass:"fav-seller-list"},_vm._l((_vm.favorites),function(singleFav){return _c('li',{staticClass:"fav-seller-list-item"},[_c('div',{staticClass:"fav-seller-list-item-info",on:{"click":function($event){_vm.openProfile(singleFav.key)}}},[_c('div',{staticClass:"fav-seller-list-item-avatar"},[_c('div',{staticClass:"fav-seller-list-item-image",style:('background-image:' + singleFav.avatar)})]),_vm._v(" "),_c('span',{staticClass:"fav-seller-list-item-name"},[_vm._v("\n                        "+_vm._s(singleFav.name)+"\n                    ")])])])})):_vm._e(),_vm._v(" "),_c('div',{staticClass:"fav-seller-footer",attrs:{"hidden":""}},[_c('small',{staticClass:"fav-seller-version-info",on:{"dblclick":_vm.toggleDebug}},[_vm._v(_vm._s(_vm.package.version))]),_vm._v(" "),(_vm.debug)?_c('div',{staticClass:"fav-seller-error-message"},[_vm._v(_vm._s(_vm.error.message))]):_vm._e()])])}
 __vue__options__.staticRenderFns = []
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
@@ -8489,9 +8465,9 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   module.hot.accept()
   module.hot.dispose(__vueify_style_dispose__)
   if (!module.hot.data) {
-    hotAPI.createRecord("data-v-4619d866", __vue__options__)
+    hotAPI.createRecord("data-v-e0eeac72", __vue__options__)
   } else {
-    hotAPI.reload("data-v-4619d866", __vue__options__)
+    hotAPI.reload("data-v-e0eeac72", __vue__options__)
   }
 })()}
 },{"../extention/scripts/src/statistics.es6":1,"../extention/scripts/src/storageChrome.es6":2,"../package.json":7,"./storage":10,"vue":5,"vue-hot-reload-api":4,"vueify/lib/insert-css":6}],9:[function(require,module,exports){

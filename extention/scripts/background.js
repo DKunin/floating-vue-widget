@@ -7,7 +7,7 @@ var statistics = require('./statistics.es6');
 
 var currentTabUrl = void 0;
 chrome.runtime.onMessage.addListener(function (msg, sender) {
-    if (msg.from === 'content' && msg.subject === 'showPageActuion') {
+    if (msg.from === 'content' && msg.subject === 'showPageAction') {
         chrome.pageAction.show(sender.tab.id);
     }
 
