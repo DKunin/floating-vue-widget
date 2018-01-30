@@ -132,9 +132,13 @@ async function updateData(url, localUpdate = false) {
 
 chrome.runtime.onInstalled.addListener(function(details) {
     if (details.reason == 'install') {
-        statistics('installExtention');
+        setTimeout(() => {
+            statistics('installExtention');
+        }, 3000);
     } else if (details.reason == 'update') {
         var thisVersion = chrome.runtime.getManifest().version;
-        statistics('updateExtention:' + thisVersion);
+        setTimeout(() => {
+           statistics('updateExtention:' + thisVersion);
+        }, 3000);
     }
 });
